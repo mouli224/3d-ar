@@ -22,14 +22,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
-import axios from 'axios';
-
-interface Model3D {
-  id: number;
-  name: string;
-  model_file: string;
-  description?: string;
-}
+import { modelService, Model3D } from '../services/api';
 
 const ARView: React.FC = () => {
   const navigate = useNavigate();
@@ -211,8 +204,8 @@ const ARView: React.FC = () => {
     setIsLoading(true);
     try {
       const loader = new GLTFLoader();
-      const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const modelUrl = `${baseURL}${model.model_file}`;
+      // For client-side storage, model.model_file is already a blob URL
+      const modelUrl = model.model_file;
       
       loader.load(
         modelUrl,
@@ -259,9 +252,8 @@ const ARView: React.FC = () => {
   // Fetch available models
   const fetchModels = async () => {
     try {
-      const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const response = await axios.get<Model3D[]>(`${baseURL}/api/models/`);
-      setModels(response.data);
+      const models = await modelService.getModels();
+      setModels(models);
     } catch (err) {
       console.error('Failed to fetch models:', err);
       setError('Failed to fetch models');

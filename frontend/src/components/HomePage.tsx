@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Container, 
   Typography, 
@@ -13,9 +13,15 @@ import { useNavigate } from 'react-router-dom';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import Upload3DIcon from '@mui/icons-material/ViewInAr';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { initializeSampleModels } from '../services/sampleModelsService';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Initialize sample models on app start
+    initializeSampleModels();
+  }, []);
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>

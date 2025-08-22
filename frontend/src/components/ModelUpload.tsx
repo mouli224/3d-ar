@@ -14,18 +14,11 @@ import {
   Chip
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { modelService, Model3D } from '../services/api';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
-
-interface UploadResponse {
-  id: number;
-  name: string;
-  model_file: string;
-  thumbnail?: string;
-}
 
 const ModelUpload: React.FC = () => {
   const navigate = useNavigate();
@@ -75,21 +68,22 @@ const ModelUpload: React.FC = () => {
     }
 
     try {
-      const response = await axios.post<UploadResponse>(
-        '/api/models/',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(progress);
-            }
-          },
-        }
-      );
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const newProgress = prev + 10;
+          if (newProgress >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return newProgress;
+        });
+      }, 100);
+
+      const response = await modelService.uploadModel(formData);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
 
       setMessage({ type: 'success', text: 'Model uploaded successfully!' });
       setFile(null);
@@ -98,7 +92,7 @@ const ModelUpload: React.FC = () => {
       setUploadProgress(0);
       
       // Store the uploaded model info for AR view
-      localStorage.setItem('lastUploadedModel', JSON.stringify(response.data));
+      localStorage.setItem('lastUploadedModel', JSON.stringify(response));
       
     } catch (error) {
       console.error('Upload error:', error);
