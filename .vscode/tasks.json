@@ -1,0 +1,30 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Django Backend",
+			"type": "shell",
+			"command": "cd backend; python manage.py runserver",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Start React Frontend",
+			"type": "shell",
+			"command": "cd frontend; npm start",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Start Full Stack",
+			"dependsOrder": "parallel",
+			"dependsOn": [
+				"Start Django Backend",
+				"Start React Frontend"
+			],
+			"group": "build"
+		}
+	]
+}

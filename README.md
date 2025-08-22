@@ -1,137 +1,46 @@
-# 🌟 AR 3D Viewer - Frontend-Only Edition
+# Getting Started with Create React App
 
-A modern, mobile-friendly **Augmented Reality 3D Model Viewer** built with React, Three.js, and AR.js. This frontend-only version uses browser localStorage for model storage, making it perfect for quick deployment to platforms like Vercel.
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## ✨ Features
+## Available Scripts
 
-- 📱 **Mobile-First Design** - Optimized for mobile browsers
-- 📸 **Camera Integration** - Access device camera for AR experience
-- 🎯 **AR Mode** - View 3D models in augmented reality
-- 📤 **Model Upload** - Upload .glb/.gltf files (stored locally)
-- 🎮 **Interactive Controls** - Rotate, zoom, and pan 3D models
-- 🖼️ **Screenshot Capture** - Save AR scenes as images
-- 💫 **Modern UI** - Animated interface with AR-themed colors
-- 🔄 **Local Storage** - No backend required, everything stored in browser
+In the project directory, you can run:
 
-## 🚀 Quick Start
+### `npm start`
 
-### Development
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-```bash
-# Clone the repository
-git clone https://github.com/mouli224/3d-ar.git
-cd 3d-ar
+The page will reload if you make edits.\
+You will also see any lint errors in the console.
 
-# Install dependencies
-cd frontend
-npm install
+### `npm test`
 
-# Start development server
-npm start
-```
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-Visit `http://localhost:3000` to see the app.
+### `npm run build`
 
-### Production Deployment
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
 
-The app is configured for easy deployment to Vercel:
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
 
-```bash
-# Deploy to Vercel
-npx vercel
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-# Or connect your GitHub repo to Vercel for automatic deployments
-```
+### `npm run eject`
 
-## 🛠️ Tech Stack
+**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
 
-- **Frontend**: React 18 + TypeScript
-- **3D Graphics**: Three.js + GLTFLoader
-- **AR**: AR.js (WebRTC camera access)
-- **UI**: Material-UI + Custom animations
-- **Storage**: Browser localStorage (no backend needed)
-- **Deployment**: Vercel-ready configuration
+If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-## 📱 Browser Support
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
 
-- ✅ Chrome/Edge (Recommended)
-- ✅ Safari (iOS/macOS)
-- ✅ Firefox
-- ⚠️ Camera access requires HTTPS in production
+You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
 
-## 🎮 How to Use
+## Learn More
 
-1. **Home Page**: Overview and navigation
-2. **Upload Models**: Add .glb/.gltf files (stored locally)
-3. **AR View**: 
-   - Allow camera permissions
-   - Select a 3D model from the list
-   - Use touch controls to manipulate the model:
-     - 🤏 **Pinch** to zoom
-     - 👆 **Drag** to rotate
-     - 📸 **Camera button** to take screenshot
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-## 🔧 Local Storage
-
-The app uses browser localStorage to store:
-- 3D model metadata
-- Model files (as base64)
-- User preferences
-
-**Note**: localStorage has size limits (~5-10MB). For larger models, consider implementing cloud storage.
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Connect repository to Vercel
-3. Deploy automatically
-
-The `vercel.json` configuration is already optimized for this project.
-
-### Other Platforms
-
-The app works on any static hosting service:
-- Netlify
-- GitHub Pages
-- AWS S3 + CloudFront
-- Firebase Hosting
-
-## 🔄 Architecture Changes
-
-This version has been converted from a full-stack Django + React app to a frontend-only React app:
-
-### What Changed:
-- ❌ **Removed**: Django backend, PostgreSQL database, server APIs
-- ✅ **Added**: Client-side localStorage service
-- ✅ **Added**: Blob URL handling for 3D models
-- ✅ **Simplified**: Single-command deployment
-
-### Benefits:
-- 🚀 **Faster deployment** - No server setup needed
-- 💰 **Cost effective** - No backend hosting costs
-- 🔒 **Privacy focused** - All data stays on user's device
-- 📱 **Offline capable** - Works without internet after first load
-
-## 🛡️ Privacy
-
-- All data stored locally in your browser
-- No external servers or data collection
-- Models never leave your device
-
-## 📝 License
-
-MIT License - feel free to use for personal or commercial projects.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
-
----
-
-**Built with ❤️ for the AR community**
+To learn React, check out the [React documentation](https://reactjs.org/).
