@@ -211,7 +211,8 @@ const ARView: React.FC = () => {
     setIsLoading(true);
     try {
       const loader = new GLTFLoader();
-      const modelUrl = `http://localhost:8000${model.model_file}`;
+      const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const modelUrl = `${baseURL}${model.model_file}`;
       
       loader.load(
         modelUrl,
@@ -258,7 +259,8 @@ const ARView: React.FC = () => {
   // Fetch available models
   const fetchModels = async () => {
     try {
-      const response = await axios.get<Model3D[]>('http://localhost:8000/api/models/');
+      const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const response = await axios.get<Model3D[]>(`${baseURL}/api/models/`);
       setModels(response.data);
     } catch (err) {
       console.error('Failed to fetch models:', err);

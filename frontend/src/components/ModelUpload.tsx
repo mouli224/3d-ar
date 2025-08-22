@@ -76,7 +76,7 @@ const ModelUpload: React.FC = () => {
 
     try {
       const response = await axios.post<UploadResponse>(
-        'http://localhost:8000/api/models/',
+        '/api/models/',
         formData,
         {
           headers: {
