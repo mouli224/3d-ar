@@ -569,6 +569,17 @@ const ARView: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Ensure video element gets the camera stream when AR becomes active
+  useEffect(() => {
+    if (isARActive && cameraStream && videoRef.current) {
+      console.log('📸 Ensuring video element has camera stream...');
+      if (videoRef.current.srcObject !== cameraStream) {
+        videoRef.current.srcObject = cameraStream;
+        console.log('✅ Video element assigned camera stream');
+      }
+    }
+  }, [isARActive, cameraStream]);
+
   // Auto-load default model and start animation when models are available
   useEffect(() => {
     if (models.length > 0 && isARActive && !selectedModel) {
@@ -606,6 +617,20 @@ const ARView: React.FC = () => {
       
       console.log('✅ Setting AR active...');
       setIsARActive(true);
+      
+      // Ensure video element gets the camera stream
+      if (cameraStream && videoRef.current) {
+        console.log('🔗 Ensuring video element has camera stream...');
+        videoRef.current.srcObject = cameraStream;
+        videoRef.current.playsInline = true;
+        videoRef.current.muted = true;
+        try {
+          await videoRef.current.play();
+          console.log('✅ Video now playing with camera stream');
+        } catch (playError) {
+          console.error('❌ Video play failed:', playError);
+        }
+      }
       
       // Load selected model
       if (selectedModel) {
