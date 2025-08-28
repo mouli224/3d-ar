@@ -41,38 +41,95 @@ const ARView: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState<Model3D | null>(null);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [isARActive, setIsARActive] = useState(false);
+  const [currentModel, setCurrentModel] = useState<THREE.Object3D | null>(null);
 
   // Camera setup
   const initCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280, max: 1920 },
-          height: { ideal: 720, max: 1080 }
+      console.log('Requesting camera access...');
+      
+      // Try different camera configurations
+      const constraints = [
+        // Primary: Back camera with high resolution
+        {
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 }
+          }
+        },
+        // Fallback: Any camera
+        {
+          video: { 
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        },
+        // Last resort: Basic video
+        { video: true }
+      ];
+
+      let stream = null;
+      for (const constraint of constraints) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraint);
+          console.log('Camera stream obtained with constraint:', constraint);
+          break;
+        } catch (err) {
+          console.warn('Failed with constraint:', constraint, err);
         }
-      });
+      }
+
+      if (!stream) {
+        throw new Error('Could not access camera with any configuration');
+      }
       
       if (videoRef.current) {
+        console.log('Setting video source...');
         videoRef.current.srcObject = stream;
         videoRef.current.playsInline = true;
         videoRef.current.muted = true;
         videoRef.current.autoplay = true;
         
-        videoRef.current.addEventListener('loadedmetadata', () => {
-          videoRef.current?.play();
+        // Wait for video to be ready
+        await new Promise((resolve, reject) => {
+          const video = videoRef.current!;
+          
+          const onLoadedMetadata = () => {
+            console.log('Video metadata loaded, dimensions:', video.videoWidth, 'x', video.videoHeight);
+            video.removeEventListener('loadedmetadata', onLoadedMetadata);
+            video.removeEventListener('error', onError);
+            resolve(void 0);
+          };
+          
+          const onError = (err: any) => {
+            console.error('Video loading error:', err);
+            video.removeEventListener('loadedmetadata', onLoadedMetadata);
+            video.removeEventListener('error', onError);
+            reject(err);
+          };
+          
+          video.addEventListener('loadedmetadata', onLoadedMetadata);
+          video.addEventListener('error', onError);
         });
         
-        // Ensure video plays
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((error) => {
-            console.error('Video play failed:', error);
-          });
+        // Play the video
+        try {
+          await videoRef.current.play();
+          console.log('Video is now playing');
+        } catch (playError) {
+          console.error('Video play failed:', playError);
+          // Try to play again after a short delay
+          setTimeout(() => {
+            videoRef.current?.play().catch(console.error);
+          }, 500);
         }
       }
+      
       setCameraStream(stream);
       setError(null);
+      console.log('Camera initialization complete');
     } catch (err) {
       console.error('Camera access error:', err);
       setError('Unable to access camera. Please ensure camera permissions are granted.');
@@ -197,28 +254,113 @@ const ARView: React.FC = () => {
     };
   };
 
+  // Create sample 3D models for immediate testing
+  const createSampleModel = (type: 'cube' | 'sphere' | 'pyramid' = 'cube') => {
+    if (!sceneRef.current) return;
+
+    // Remove previous model
+    if (currentModel) {
+      sceneRef.current.remove(currentModel);
+    }
+
+    let geometry: THREE.BufferGeometry;
+    let color: number;
+
+    switch (type) {
+      case 'sphere':
+        geometry = new THREE.SphereGeometry(1, 32, 32);
+        color = 0x00e5ff; // Cyan
+        break;
+      case 'pyramid':
+        geometry = new THREE.ConeGeometry(1, 2, 8);
+        color = 0xff6ec7; // Pink
+        break;
+      case 'cube':
+      default:
+        geometry = new THREE.BoxGeometry(1, 1, 1);
+        color = 0x00ff88; // Green
+        break;
+    }
+
+    const material = new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.1,
+      metalness: 0.8,
+      emissive: color,
+      emissiveIntensity: 0.1,
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(0, 0, -2);
+
+    sceneRef.current.add(mesh);
+    setCurrentModel(mesh);
+    modelRef.current = mesh;
+
+    console.log(`Sample ${type} model created and added to scene`);
+    setupControls();
+  };
+
   // Load 3D model
   const loadModel = async (model: Model3D) => {
     if (!sceneRef.current) return;
 
     setIsLoading(true);
+    setError(null);
+    
     try {
+      console.log('Loading model:', model.name);
+
+      // Handle sample models
+      if (model.id >= 9999000) {
+        const type = model.model_file.replace('sample-', '') as 'cube' | 'sphere' | 'pyramid';
+        createSampleModel(type);
+        setSelectedModel(model);
+        setIsLoading(false);
+        return;
+      }
+
+      // Handle uploaded models
       const loader = new GLTFLoader();
-      // For client-side storage, model.model_file is already a blob URL
-      const modelUrl = model.model_file;
-      
+      let modelUrl = model.model_file;
+
+      // If the model file is base64 data, convert to blob URL
+      if (modelUrl.startsWith('data:')) {
+        try {
+          const response = await fetch(modelUrl);
+          const blob = await response.blob();
+          modelUrl = URL.createObjectURL(blob);
+        } catch (e) {
+          console.error('Failed to convert base64 to blob:', e);
+          throw new Error('Invalid model file format');
+        }
+      }
+
+      console.log('Loading model from URL:', modelUrl.substring(0, 50) + '...');
+
       loader.load(
         modelUrl,
         (gltf) => {
           // Remove previous model
-          if (modelRef.current && sceneRef.current) {
-            sceneRef.current.remove(modelRef.current);
+          if (currentModel && sceneRef.current) {
+            sceneRef.current.remove(currentModel);
           }
 
           const loadedModel = gltf.scene;
-          loadedModel.scale.setScalar(0.5);
-          loadedModel.position.set(0, 0, 0);
           
+          // Scale the model appropriately
+          const box = new THREE.Box3().setFromObject(loadedModel);
+          const center = box.getCenter(new THREE.Vector3());
+          const size = box.getSize(new THREE.Vector3());
+          
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = maxDim > 0 ? 2 / maxDim : 1;
+          loadedModel.scale.setScalar(scale);
+          
+          // Center the model
+          loadedModel.position.sub(center.multiplyScalar(scale));
+          loadedModel.position.z = -2; // Position in front of camera
+
           // Enable shadows
           loadedModel.traverse((child) => {
             if (child instanceof THREE.Mesh) {
@@ -228,23 +370,33 @@ const ARView: React.FC = () => {
           });
 
           sceneRef.current?.add(loadedModel);
+          setCurrentModel(loadedModel);
           modelRef.current = loadedModel;
           setSelectedModel(model);
-          setIsLoading(false);
           setupControls();
+
+          console.log('Model loaded successfully:', model.name);
+
+          // Clean up blob URL if we created one
+          if (modelUrl.startsWith('blob:') && modelUrl !== model.model_file) {
+            URL.revokeObjectURL(modelUrl);
+          }
         },
         (progress) => {
           console.log('Loading progress:', progress);
         },
         (error) => {
           console.error('Model loading error:', error);
-          setError('Failed to load 3D model');
-          setIsLoading(false);
+          // Create fallback cube on error
+          createSampleModel('cube');
+          setError(`Failed to load ${model.name}. Showing test cube instead.`);
         }
       );
     } catch (err) {
       console.error('Model loading error:', err);
-      setError('Failed to load 3D model');
+      createSampleModel('cube');
+      setError(`Error loading model: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -252,8 +404,45 @@ const ARView: React.FC = () => {
   // Fetch available models
   const fetchModels = async () => {
     try {
-      const models = await modelService.getModels();
-      setModels(models);
+      const userModels = await modelService.getModels();
+      
+      // Add sample models
+      const sampleModels: Model3D[] = [
+        {
+          id: 9999001,
+          name: 'Sample Cube',
+          description: 'A test cube for AR demonstration',
+          model_file: 'sample-cube',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          file_size: 1024,
+        },
+        {
+          id: 9999002,
+          name: 'Sample Sphere',
+          description: 'A test sphere for AR demonstration',
+          model_file: 'sample-sphere',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          file_size: 1024,
+        },
+        {
+          id: 9999003,
+          name: 'Sample Pyramid',
+          description: 'A test pyramid for AR demonstration',
+          model_file: 'sample-pyramid',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          file_size: 1024,
+        },
+      ];
+      
+      setModels([...sampleModels, ...userModels]);
+      
+      // Auto-select first model if none selected
+      if (!selectedModel && sampleModels.length > 0) {
+        setSelectedModel(sampleModels[0]);
+      }
     } catch (err) {
       console.error('Failed to fetch models:', err);
       setError('Failed to fetch models');
@@ -318,6 +507,22 @@ const ARView: React.FC = () => {
   // Initialize on mount
   useEffect(() => {
     fetchModels();
+    
+    // Auto-start camera on component mount
+    const initializeAR = async () => {
+      try {
+        console.log('Auto-initializing AR on component mount...');
+        await initCamera();
+        initThreeJS();
+        setIsARActive(true);
+      } catch (error) {
+        console.error('Auto-initialization failed:', error);
+        setError('Failed to initialize camera. Please click the AR button to try again.');
+      }
+    };
+    
+    initializeAR();
+    
     return () => {
       if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
@@ -326,7 +531,18 @@ const ARView: React.FC = () => {
         cancelAnimationFrame(animationIdRef.current);
       }
     };
-  }, [cameraStream]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-load default model and start animation when models are available
+  useEffect(() => {
+    if (models.length > 0 && isARActive && !selectedModel) {
+      console.log('Auto-loading first available model...');
+      loadModel(models[0]);
+      animate(); // Start the animation loop
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [models, isARActive, selectedModel]); // Only run on mount
 
   // Start AR
   const startAR = async () => {
@@ -576,7 +792,13 @@ const ARView: React.FC = () => {
   }
 
   return (
-    <Box sx={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ 
+      position: 'relative', 
+      width: '100vw', 
+      height: '100vh', 
+      overflow: 'hidden',
+      backgroundColor: '#000' // Fallback color
+    }}>
       {/* Camera Video */}
       <video
         ref={videoRef}
@@ -587,12 +809,135 @@ const ARView: React.FC = () => {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          zIndex: 1
+          zIndex: 1,
+          display: cameraStream ? 'block' : 'none' // Only show when stream is available
         }}
         playsInline
         muted
         autoPlay
+        onLoadedMetadata={() => {
+          console.log('Video metadata loaded');
+          if (videoRef.current) {
+            videoRef.current.play().catch(err => {
+              console.error('Video play error:', err);
+            });
+          }
+        }}
+        onPlay={() => console.log('Video started playing')}
+        onError={(e) => console.error('Video error:', e)}
       />
+
+      {/* Model Selector */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          zIndex: 1000,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          borderRadius: 2,
+          p: 2,
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(0, 229, 255, 0.3)',
+          maxWidth: '300px',
+        }}
+      >
+        <Typography variant="h6" sx={{ color: '#00e5ff', mb: 1, fontSize: '0.9rem' }}>
+          Select 3D Model
+        </Typography>
+        
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {models.map((model) => (
+            <Button
+              key={model.id}
+              variant={selectedModel?.id === model.id ? 'contained' : 'outlined'}
+              size="small"
+              onClick={() => loadModel(model)}
+              sx={{
+                color: selectedModel?.id === model.id ? '#000' : '#00e5ff',
+                borderColor: '#00e5ff',
+                backgroundColor: selectedModel?.id === model.id ? '#00e5ff' : 'transparent',
+                fontSize: '0.75rem',
+                '&:hover': {
+                  backgroundColor: selectedModel?.id === model.id ? '#00e5ff' : 'rgba(0, 229, 255, 0.1)',
+                },
+              }}
+            >
+              {model.name}
+            </Button>
+          ))}
+        </Box>
+      </Box>
+
+      {/* Error Display */}
+      {error && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 100,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            backgroundColor: 'rgba(255, 87, 51, 0.9)',
+            color: 'white',
+            p: 2,
+            borderRadius: 2,
+            maxWidth: '80%',
+            textAlign: 'center',
+          }}
+        >
+          <Typography variant="body2">{error}</Typography>
+          <Button
+            variant="contained"
+            onClick={() => createSampleModel('cube')}
+            sx={{ mt: 1, backgroundColor: '#ff6ec7', fontSize: '0.75rem' }}
+            size="small"
+          >
+            Show Test Cube
+          </Button>
+        </Box>
+      )}
+
+      {/* Loading Indicator */}
+      {isLoading && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1000,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            color: '#00e5ff',
+            p: 3,
+            borderRadius: 2,
+            textAlign: 'center',
+          }}
+        >
+          <CircularProgress sx={{ color: '#00e5ff', mb: 1 }} size={30} />
+          <Typography variant="body2">Loading 3D Model...</Typography>
+        </Box>
+      )}
+
+      {/* Loading indicator when no camera stream */}
+      {!cameraStream && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#000',
+            zIndex: 1
+          }}
+        >
+          <Typography color="white">Initializing camera...</Typography>
+        </Box>
+      )}
 
       {/* 3D Canvas */}
       <canvas
@@ -826,6 +1171,37 @@ const ARView: React.FC = () => {
           </Alert>
         </Box>
       )}
+
+      {/* Debug Panel - Remove in production */}
+      <Box sx={{ 
+        position: 'absolute', 
+        top: 60, 
+        right: 16, 
+        zIndex: 5,
+        background: 'rgba(0, 0, 0, 0.8)',
+        color: 'white',
+        p: 2,
+        borderRadius: 2,
+        fontSize: '12px',
+        maxWidth: 200
+      }}>
+        <Typography variant="caption" display="block">🔍 Debug Info:</Typography>
+        <Typography variant="caption" display="block">
+          Camera Stream: {cameraStream ? '✅ Active' : '❌ None'}
+        </Typography>
+        <Typography variant="caption" display="block">
+          Video Element: {videoRef.current?.srcObject ? '✅ Has Source' : '❌ No Source'}
+        </Typography>
+        <Typography variant="caption" display="block">
+          Video Playing: {videoRef.current?.paused === false ? '▶️ Playing' : '⏸️ Paused'}
+        </Typography>
+        <Typography variant="caption" display="block">
+          Video Size: {videoRef.current?.videoWidth || 0} x {videoRef.current?.videoHeight || 0}
+        </Typography>
+        <Typography variant="caption" display="block">
+          Error: {error ? '❌ Yes' : '✅ None'}
+        </Typography>
+      </Box>
     </Box>
   );
 };
