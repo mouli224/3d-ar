@@ -142,7 +142,23 @@ const ARView: React.FC = () => {
       console.log('Camera initialization complete');
     } catch (err) {
       console.error('Camera access error:', err);
-      setError('Unable to access camera. Please ensure camera permissions are granted.');
+      
+      let errorMessage = 'Unable to access camera. ';
+      if (err instanceof Error) {
+        if (err.message.includes('HTTPS')) {
+          errorMessage = 'Camera access requires HTTPS. Please ensure your site is secure.';
+        } else if (err.message.includes('Permission')) {
+          errorMessage = 'Camera permission denied. Please allow camera access and refresh the page.';
+        } else if (err.message.includes('not found') || err.message.includes('NotFoundError')) {
+          errorMessage = 'No camera found. Please ensure a camera is connected to your device.';
+        } else if (err.message.includes('in use') || err.message.includes('NotReadableError')) {
+          errorMessage = 'Camera is already in use by another application. Please close other apps using the camera.';
+        } else {
+          errorMessage = `Camera error: ${err.message}`;
+        }
+      }
+      
+      setError(errorMessage);
     }
   };
 
@@ -519,20 +535,9 @@ const ARView: React.FC = () => {
   useEffect(() => {
     fetchModels();
     
-    // Auto-start camera on component mount
-    const initializeAR = async () => {
-      try {
-        console.log('Auto-initializing AR on component mount...');
-        await initCamera();
-        initThreeJS();
-        setIsARActive(true);
-      } catch (error) {
-        console.error('Auto-initialization failed:', error);
-        setError('Failed to initialize camera. Please click the AR button to try again.');
-      }
-    };
-    
-    initializeAR();
+    // Don't auto-start camera - wait for user interaction
+    // This is required for browser security and works better on production
+    console.log('ARView initialized. Waiting for user to start AR...');
     
     return () => {
       if (cameraStream) {
@@ -703,36 +708,41 @@ const ARView: React.FC = () => {
           sx={{ 
             py: 3,
             px: 4,
-            fontSize: '1.3rem',
-            fontWeight: 700,
-            background: 'linear-gradient(45deg, #ff6ec7, #ffb3ff)',
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
             '&:hover': {
-              background: 'linear-gradient(45deg, #ffb3ff, #ff6ec7)',
-              transform: 'translateY(-3px) scale(1.05)',
-              boxShadow: '0 15px 40px rgba(255, 110, 199, 0.4)',
+              background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
             },
             '&:disabled': {
               background: 'rgba(100, 100, 100, 0.3)',
               color: 'rgba(255, 255, 255, 0.5)',
             },
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            borderRadius: 6
+            transition: 'all 0.3s ease',
+            borderRadius: 3,
+            textTransform: 'none'
           }}
         >
-          🚀 START AR EXPERIENCE
+          🚀 Start AR Experience
         </Button>
 
         {error && (
           <Alert 
             severity="error" 
             sx={{ 
-              mt: 2,
-              background: 'rgba(255, 110, 199, 0.1)',
-              border: '1px solid rgba(255, 110, 199, 0.3)',
-              color: '#ffffff',
+              mt: 3,
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              borderRadius: 3,
+              color: '#dc2626',
               '& .MuiAlert-icon': {
-                color: '#ff6ec7',
+                color: '#dc2626',
               },
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
             }}
           >
             {error}
