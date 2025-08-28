@@ -571,51 +571,61 @@ const ARView: React.FC = () => {
 
   if (!isARActive) {
     return (
-      <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/')}
-          sx={{ 
-            mb: 3,
-            color: '#00e5ff',
-            '&:hover': {
-              background: 'rgba(0, 229, 255, 0.1)',
-              transform: 'translateX(-5px)',
-            },
-            transition: 'all 0.3s ease'
-          }}
-        >
-          Back to Home
-        </Button>
-        
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom
-          sx={{ 
-            fontFamily: 'Orbitron, monospace',
-            background: 'linear-gradient(45deg, #00e5ff, #ff6ec7)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 700,
-            textShadow: '0 0 30px rgba(0, 229, 255, 0.5)'
-          }}
-        >
-          AR 3D VIEWER
-        </Typography>
-        
-        <Typography 
-          variant="body1" 
-          color="text.secondary" 
-          paragraph
-          sx={{ 
-            color: '#b3e5fc',
-            fontSize: '1.1rem',
-            mb: 4
-          }}
-        >
-          Enter AR mode to view and interact with 3D models in your environment
-        </Typography>
+      <Box 
+        sx={{ 
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2
+        }}
+      >
+        <Container maxWidth="sm">
+          <Box textAlign="center">
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/')}
+              sx={{ 
+                mb: 4,
+                color: '#718096',
+                '&:hover': {
+                  background: 'rgba(113, 128, 150, 0.1)',
+                  transform: 'translateX(-5px)',
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Back to Home
+            </Button>
+            
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 300,
+                fontSize: { xs: '2rem', md: '2.5rem' },
+                color: '#2d3748',
+                mb: 2,
+                letterSpacing: '-0.02em'
+              }}
+            >
+              AR Experience
+            </Typography>
+            
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#718096',
+                fontWeight: 400,
+                maxWidth: '500px',
+                mx: 'auto',
+                lineHeight: 1.6,
+                mb: 6
+              }}
+            >
+              Point your camera at your surroundings and interact with 3D models in augmented reality
+            </Typography>
 
         {models.length > 0 && (
           <Box 
@@ -787,7 +797,9 @@ const ARView: React.FC = () => {
             ))}
           </DialogContent>
         </Dialog>
-      </Container>
+            </Box>
+          </Container>
+        </Box>
     );
   }
 

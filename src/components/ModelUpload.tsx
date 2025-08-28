@@ -4,8 +4,6 @@ import {
   Typography,
   Button,
   Box,
-  Card,
-  CardContent,
   LinearProgress,
   Alert,
   TextField,
@@ -103,56 +101,76 @@ const ModelUpload: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Fade in={true} timeout={800}>
-        <Box mb={3} className="slide-in-down">
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/')}
-            sx={{ 
-              mb: 2,
-              color: '#00e5ff',
-              '&:hover': {
-                background: 'rgba(0, 229, 255, 0.1)',
-                transform: 'translateX(-5px)',
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            Back to Home
-          </Button>
-          
-          <Typography 
-            variant="h4" 
-            component="h1" 
-            gutterBottom
-            sx={{ 
-              fontFamily: 'Orbitron, monospace',
-              color: '#00e5ff',
-              textShadow: '0 0 20px rgba(0, 229, 255, 0.5)',
-              fontWeight: 700
-            }}
-          >
-            UPLOAD 3D MODEL
-          </Typography>
-          
-          <Typography 
-            variant="body1" 
-            color="text.secondary" 
-            paragraph
-            sx={{ 
-              color: '#b3e5fc',
-              fontSize: '1.1rem'
-            }}
-          >
-            Upload your 3D models to experience them in Augmented Reality
-          </Typography>
-        </Box>
-      </Fade>
+    <Box 
+      sx={{ 
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2
+      }}
+    >
+      <Container maxWidth="sm">
+        <Fade in={true} timeout={800}>
+          <Box mb={4} textAlign="center">
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/')}
+              sx={{ 
+                mb: 3,
+                color: '#718096',
+                '&:hover': {
+                  background: 'rgba(113, 128, 150, 0.1)',
+                  transform: 'translateX(-5px)',
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Back to Home
+            </Button>
+            
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 300,
+                fontSize: { xs: '2rem', md: '2.5rem' },
+                color: '#2d3748',
+                mb: 2,
+                letterSpacing: '-0.02em'
+              }}
+            >
+              Upload 3D Model
+            </Typography>
+            
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#718096',
+                fontWeight: 400,
+                maxWidth: '500px',
+                mx: 'auto',
+                lineHeight: 1.6,
+                mb: 4
+              }}
+            >
+              Add your 3D models to experience them in augmented reality
+            </Typography>
+          </Box>
+        </Fade>
 
-      <Zoom in={true} timeout={1000}>
-        <Card className="ar-card scale-in" sx={{ position: 'relative', overflow: 'hidden' }}>
-          <CardContent sx={{ p: 3 }}>
+        <Zoom in={true} timeout={1000}>
+          <Box
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            }}
+          >
             <Box mb={3}>
               <input
                 accept=".glb,.gltf,.obj,.fbx"
@@ -170,16 +188,17 @@ const ModelUpload: React.FC = () => {
                   sx={{ 
                     py: 3, 
                     mb: 2,
-                    fontSize: '1.2rem',
-                    fontWeight: 600,
-                    border: '2px dashed #00e5ff',
-                    borderRadius: 4,
-                    background: 'rgba(0, 229, 255, 0.05)',
+                    fontSize: '1.1rem',
+                    fontWeight: 500,
+                    border: '2px dashed #cbd5e0',
+                    borderRadius: 3,
+                    color: '#718096',
+                    background: 'rgba(113, 128, 150, 0.05)',
                     '&:hover': {
-                      background: 'rgba(0, 229, 255, 0.1)',
-                      borderColor: '#64ffda',
+                      background: 'rgba(113, 128, 150, 0.1)',
+                      borderColor: '#a0aec0',
                       transform: 'translateY(-2px)',
-                      boxShadow: '0 8px 25px rgba(0, 229, 255, 0.2)',
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
                     },
                     transition: 'all 0.3s ease'
                   }}
@@ -193,16 +212,16 @@ const ModelUpload: React.FC = () => {
                   <Box 
                     sx={{ 
                       p: 2, 
-                      background: 'rgba(100, 255, 218, 0.1)',
+                      background: 'rgba(102, 126, 234, 0.1)',
                       borderRadius: 2,
-                      border: '1px solid rgba(100, 255, 218, 0.3)',
+                      border: '1px solid rgba(102, 126, 234, 0.3)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1
                     }}
                   >
-                    <CheckCircleIcon sx={{ color: '#64ffda', fontSize: 20 }} />
-                    <Typography variant="body2" sx={{ color: '#64ffda' }}>
+                    <CheckCircleIcon sx={{ color: '#667eea', fontSize: 20 }} />
+                    <Typography variant="body2" sx={{ color: '#667eea', fontWeight: 500 }}>
                       Selected: {file.name}
                     </Typography>
                   </Box>
@@ -210,17 +229,18 @@ const ModelUpload: React.FC = () => {
               )}
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
               {acceptedFormats.map((format) => (
                 <Chip 
                   key={format}
                   label={format.toUpperCase()}
                   size="small"
                   sx={{
-                    background: 'linear-gradient(45deg, rgba(0, 229, 255, 0.2), rgba(255, 110, 199, 0.2))',
-                    color: '#ffffff',
-                    border: '1px solid rgba(0, 229, 255, 0.3)',
-                    fontWeight: 600
+                    background: 'rgba(113, 128, 150, 0.1)',
+                    color: '#718096',
+                    border: '1px solid rgba(113, 128, 150, 0.2)',
+                    fontWeight: 500,
+                    fontSize: '0.75rem'
                   }}
                 />
               ))}
@@ -236,18 +256,17 @@ const ModelUpload: React.FC = () => {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': {
-                    borderColor: 'rgba(0, 229, 255, 0.3)',
+                    borderColor: 'rgba(113, 128, 150, 0.3)',
                   },
                   '&:hover fieldset': {
-                    borderColor: 'rgba(0, 229, 255, 0.6)',
+                    borderColor: 'rgba(113, 128, 150, 0.6)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#00e5ff',
-                    boxShadow: '0 0 10px rgba(0, 229, 255, 0.3)',
+                    borderColor: '#667eea',
                   },
                 },
                 '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#00e5ff',
+                  color: '#667eea',
                 },
               }}
             />
@@ -263,18 +282,17 @@ const ModelUpload: React.FC = () => {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': {
-                    borderColor: 'rgba(0, 229, 255, 0.3)',
+                    borderColor: 'rgba(113, 128, 150, 0.3)',
                   },
                   '&:hover fieldset': {
-                    borderColor: 'rgba(0, 229, 255, 0.6)',
+                    borderColor: 'rgba(113, 128, 150, 0.6)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#00e5ff',
-                    boxShadow: '0 0 10px rgba(0, 229, 255, 0.3)',
+                    borderColor: '#667eea',
                   },
                 },
                 '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#00e5ff',
+                  color: '#667eea',
                 },
               }}
             />
@@ -286,7 +304,7 @@ const ModelUpload: React.FC = () => {
                     variant="body2" 
                     gutterBottom
                     sx={{ 
-                      color: '#00e5ff',
+                      color: '#667eea',
                       fontWeight: 600,
                       textAlign: 'center'
                     }}
@@ -299,9 +317,9 @@ const ModelUpload: React.FC = () => {
                     sx={{
                       height: 8,
                       borderRadius: 4,
-                      background: 'rgba(0, 229, 255, 0.1)',
+                      background: 'rgba(102, 126, 234, 0.1)',
                       '& .MuiLinearProgress-bar': {
-                        background: 'linear-gradient(45deg, #00e5ff, #64ffda)',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         borderRadius: 4,
                       },
                     }}
@@ -318,12 +336,12 @@ const ModelUpload: React.FC = () => {
                     icon={message.type === 'success' ? <CheckCircleIcon /> : <ErrorIcon />}
                     sx={{
                       background: message.type === 'success' 
-                        ? 'rgba(100, 255, 218, 0.1)' 
-                        : 'rgba(255, 110, 199, 0.1)',
-                      border: `1px solid ${message.type === 'success' ? 'rgba(100, 255, 218, 0.3)' : 'rgba(255, 110, 199, 0.3)'}`,
-                      color: '#ffffff',
+                        ? 'rgba(102, 126, 234, 0.1)' 
+                        : 'rgba(240, 147, 251, 0.1)',
+                      border: `1px solid ${message.type === 'success' ? 'rgba(102, 126, 234, 0.3)' : 'rgba(240, 147, 251, 0.3)'}`,
+                      color: '#2d3748',
                       '& .MuiAlert-icon': {
-                        color: message.type === 'success' ? '#64ffda' : '#ff6ec7',
+                        color: message.type === 'success' ? '#667eea' : '#f093fb',
                       },
                     }}
                   >
@@ -343,49 +361,52 @@ const ModelUpload: React.FC = () => {
                 py: 2,
                 fontSize: '1.1rem',
                 fontWeight: 600,
-                background: 'linear-gradient(45deg, #00e5ff, #64ffda)',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                borderRadius: 3,
+                textTransform: 'none',
                 '&:hover': {
-                  background: 'linear-gradient(45deg, #64ffda, #00e5ff)',
+                  background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
                   transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 25px rgba(0, 229, 255, 0.3)',
+                  boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
                 },
                 '&:disabled': {
-                  background: 'rgba(100, 100, 100, 0.3)',
-                  color: 'rgba(255, 255, 255, 0.5)',
+                  background: 'rgba(113, 128, 150, 0.3)',
+                  color: 'rgba(255, 255, 255, 0.6)',
                 },
                 transition: 'all 0.3s ease'
               }}
             >
-              {uploading ? 'UPLOADING...' : 'UPLOAD MODEL'}
+              {uploading ? 'Uploading...' : 'Upload Model'}
             </Button>
-          </CardContent>
-        </Card>
-      </Zoom>
+          </Box>
+        </Zoom>
 
-      <Fade in={true} timeout={1500}>
-        <Box 
-          mt={3}
-          sx={{
-            p: 2,
-            borderRadius: 3,
-            background: 'rgba(255, 110, 199, 0.1)',
-            border: '1px solid rgba(255, 110, 199, 0.2)',
-            backdropFilter: 'blur(10px)',
-            textAlign: 'center'
-          }}
-        >
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              color: '#ffb3ff',
-              fontWeight: 500
+        <Fade in={true} timeout={1500}>
+          <Box 
+            mt={3}
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              background: 'rgba(255, 255, 255, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(10px)',
+              textAlign: 'center'
             }}
           >
-            📁 Supported: GLB, GLTF, OBJ, FBX • 📏 Max size: 10MB
-          </Typography>
-        </Box>
-      </Fade>
-    </Container>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: '#718096',
+                fontWeight: 500
+              }}
+            >
+              📁 Supported: GLB, GLTF, OBJ, FBX • 📏 Max size: 10MB
+            </Typography>
+          </Box>
+        </Fade>
+      </Container>
+    </Box>
   );
 };
 
