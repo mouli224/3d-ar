@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -48,6 +48,16 @@ const ARView: React.FC = () => {
     try {
       console.log('Requesting camera access...');
       
+      // Check if we're in a secure context (required for camera access)
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not available. Please use HTTPS or localhost.');
+      }
+
+      // Check if we're in a secure context
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        throw new Error('Camera access requires HTTPS in production. Please ensure your site is served over HTTPS.');
+      }
+      
       // Try different camera configurations
       const constraints = [
         // Primary: Back camera with high resolution
@@ -82,7 +92,7 @@ const ARView: React.FC = () => {
       }
 
       if (!stream) {
-        throw new Error('Could not access camera with any configuration');
+        throw new Error('Could not access camera with any configuration. Please check permissions and ensure camera is not in use by another application.');
       }
       
       if (videoRef.current) {
@@ -302,7 +312,7 @@ const ARView: React.FC = () => {
   };
 
   // Load 3D model
-  const loadModel = async (model: Model3D) => {
+  const loadModel = useCallback(async (model: Model3D) => {
     if (!sceneRef.current) return;
 
     setIsLoading(true);
@@ -399,7 +409,8 @@ const ARView: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch available models
   const fetchModels = async () => {
@@ -543,6 +554,15 @@ const ARView: React.FC = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [models, isARActive, selectedModel]); // Only run on mount
+
+  // Load model when selectedModel changes
+  useEffect(() => {
+    if (selectedModel && isARActive) {
+      console.log('Loading selected model:', selectedModel.name);
+      loadModel(selectedModel);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedModel, isARActive]);
 
   // Start AR
   const startAR = async () => {
@@ -839,26 +859,29 @@ const ARView: React.FC = () => {
         onError={(e) => console.error('Video error:', e)}
       />
 
-      {/* Model Selector */}
+      {/* Model Selector - Bottom Center */}
       <Box
         sx={{
           position: 'absolute',
-          top: 20,
-          left: 20,
+          bottom: 20,
+          left: '50%',
+          transform: 'translateX(-50%)',
           zIndex: 1000,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          borderRadius: 2,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: 3,
           p: 2,
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(0, 229, 255, 0.3)',
-          maxWidth: '300px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          maxWidth: '90vw',
+          minWidth: '300px',
         }}
       >
-        <Typography variant="h6" sx={{ color: '#00e5ff', mb: 1, fontSize: '0.9rem' }}>
+        <Typography variant="h6" sx={{ color: '#2d3748', mb: 2, fontSize: '0.9rem', fontWeight: 600, textAlign: 'center' }}>
           Select 3D Model
         </Typography>
         
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
           {models.map((model) => (
             <Button
               key={model.id}
@@ -866,13 +889,20 @@ const ARView: React.FC = () => {
               size="small"
               onClick={() => loadModel(model)}
               sx={{
-                color: selectedModel?.id === model.id ? '#000' : '#00e5ff',
-                borderColor: '#00e5ff',
-                backgroundColor: selectedModel?.id === model.id ? '#00e5ff' : 'transparent',
+                color: selectedModel?.id === model.id ? 'white' : '#667eea',
+                borderColor: '#667eea',
+                backgroundColor: selectedModel?.id === model.id ? '#667eea' : 'transparent',
                 fontSize: '0.75rem',
+                fontWeight: 500,
+                borderRadius: 2,
+                px: 2,
+                py: 0.5,
+                textTransform: 'none',
                 '&:hover': {
-                  backgroundColor: selectedModel?.id === model.id ? '#00e5ff' : 'rgba(0, 229, 255, 0.1)',
+                  backgroundColor: selectedModel?.id === model.id ? '#764ba2' : 'rgba(102, 126, 234, 0.1)',
+                  transform: 'translateY(-1px)',
                 },
+                transition: 'all 0.3s ease',
               }}
             >
               {model.name}
@@ -965,7 +995,7 @@ const ARView: React.FC = () => {
         }}
       />
 
-      {/* Modern AR Controls */}
+      {/* Modern AR Controls - Top Left */}
       <Box 
         className="ar-controls"
         sx={{ 
@@ -973,11 +1003,12 @@ const ARView: React.FC = () => {
           top: 20, 
           left: 20, 
           zIndex: 3,
-          borderRadius: 5,
+          borderRadius: 3,
           p: 2,
-          background: 'rgba(0, 0, 0, 0.7)',
+          background: 'rgba(255, 255, 255, 0.9)',
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(0, 229, 255, 0.3)'
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
         }}
       >
         <Button
@@ -986,39 +1017,54 @@ const ARView: React.FC = () => {
           startIcon={<ArrowBackIcon />}
           onClick={stopAR}
           sx={{
-            background: 'linear-gradient(45deg, #ff6ec7, #ffb3ff)',
-            color: '#000',
-            fontWeight: 700,
+            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: '0.8rem',
             '&:hover': {
-              background: 'linear-gradient(45deg, #ffb3ff, #ff6ec7)',
+              background: 'linear-gradient(135deg, #f5576c 0%, #f093fb 100%)',
               transform: 'translateY(-2px)',
             },
             transition: 'all 0.3s ease',
-            borderRadius: 3
+            borderRadius: 2,
+            textTransform: 'none'
           }}
         >
-          EXIT AR
+          Exit AR
         </Button>
       </Box>
 
-      {/* Screenshot Button */}
-      <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 3 }}>
+      {/* Screenshot Button - Top Right */}
+      <Box sx={{ 
+        position: 'absolute', 
+        top: 20, 
+        right: 20, 
+        zIndex: 3,
+        borderRadius: 3,
+        background: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        p: 1
+      }}>
         <Fab
           color="primary"
           size="medium"
           onClick={captureScreenshot}
           sx={{
-            background: 'linear-gradient(45deg, #00e5ff, #64ffda)',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
             '&:hover': {
-              background: 'linear-gradient(45deg, #64ffda, #00e5ff)',
-              transform: 'scale(1.1) rotate(5deg)',
-              boxShadow: '0 8px 25px rgba(0, 229, 255, 0.4)',
+              background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+              transform: 'scale(1.05)',
             },
             transition: 'all 0.3s ease',
-            border: '2px solid rgba(255, 255, 255, 0.2)'
+            boxShadow: 'none',
+            width: 48,
+            height: 48
           }}
         >
-          <CameraAltIcon sx={{ fontSize: 28 }} />
+          <CameraAltIcon sx={{ fontSize: 24 }} />
         </Fab>
       </Box>
 
@@ -1034,22 +1080,28 @@ const ARView: React.FC = () => {
           display: 'flex', 
           gap: 2,
           p: 2,
-          borderRadius: 5,
-          background: 'rgba(0, 0, 0, 0.7)',
+          borderRadius: 3,
+          background: 'rgba(255, 255, 255, 0.9)',
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(0, 229, 255, 0.3)'
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          alignItems: 'center'
         }}
       >
         <Fab 
           size="medium" 
           onClick={zoomOut}
           sx={{
-            background: 'linear-gradient(45deg, #ff6ec7, #ffb3ff)',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
             '&:hover': {
-              background: 'linear-gradient(45deg, #ffb3ff, #ff6ec7)',
-              transform: 'scale(1.1)',
+              background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+              transform: 'scale(1.05)',
             },
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            boxShadow: 'none',
+            width: 48,
+            height: 48
           }}
         >
           <ZoomOutIcon />
@@ -1058,12 +1110,16 @@ const ARView: React.FC = () => {
           size="medium" 
           onClick={resetRotation}
           sx={{
-            background: 'linear-gradient(45deg, #00e5ff, #64ffda)',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
             '&:hover': {
-              background: 'linear-gradient(45deg, #64ffda, #00e5ff)',
-              transform: 'scale(1.1) rotate(180deg)',
+              background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+              transform: 'scale(1.05) rotate(180deg)',
             },
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            boxShadow: 'none',
+            width: 48,
+            height: 48
           }}
         >
           <RotateLeftIcon />
@@ -1072,12 +1128,16 @@ const ARView: React.FC = () => {
           size="medium" 
           onClick={zoomIn}
           sx={{
-            background: 'linear-gradient(45deg, #ff6ec7, #ffb3ff)',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
             '&:hover': {
-              background: 'linear-gradient(45deg, #ffb3ff, #ff6ec7)',
-              transform: 'scale(1.1)',
+              background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+              transform: 'scale(1.05)',
             },
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            boxShadow: 'none',
+            width: 48,
+            height: 48
           }}
         >
           <ZoomInIcon />
@@ -1096,9 +1156,10 @@ const ARView: React.FC = () => {
           gap: 1,
           p: 1.5,
           borderRadius: 3,
-          background: 'rgba(0, 229, 255, 0.2)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(0, 229, 255, 0.5)'
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
         }}
       >
         <Box 
@@ -1106,21 +1167,20 @@ const ARView: React.FC = () => {
             width: 8, 
             height: 8, 
             borderRadius: '50%', 
-            background: '#00ff00',
-            boxShadow: '0 0 10px #00ff00',
+            background: 'linear-gradient(135deg, #4ade80, #22c55e)',
+            boxShadow: '0 0 8px rgba(34, 197, 94, 0.5)',
             animation: 'pulse 2s infinite'
           }} 
         />
         <Typography 
           variant="caption" 
           sx={{ 
-            color: '#00e5ff', 
-            fontWeight: 700,
-            fontSize: '0.8rem',
-            textShadow: '0 0 5px rgba(0, 229, 255, 0.8)'
+            color: '#374151', 
+            fontWeight: 600,
+            fontSize: '0.75rem',
           }}
         >
-          AR ACTIVE
+          AR Active
         </Typography>
       </Box>
 
@@ -1135,15 +1195,16 @@ const ARView: React.FC = () => {
             zIndex: 4,
             textAlign: 'center',
             p: 3,
-            borderRadius: 4,
-            background: 'rgba(0, 0, 0, 0.8)',
+            borderRadius: 3,
+            background: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(0, 229, 255, 0.3)'
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           }}
         >
           <CircularProgress 
             sx={{ 
-              color: '#00e5ff',
+              color: '#667eea',
               mb: 2,
               '& .MuiCircularProgress-circle': {
                 strokeLinecap: 'round',
@@ -1153,12 +1214,11 @@ const ARView: React.FC = () => {
           <Typography 
             variant="body2" 
             sx={{ 
-              color: '#00e5ff', 
-              fontWeight: 600,
-              textShadow: '0 0 10px rgba(0, 229, 255, 0.8)'
+              color: '#374151',
+              fontWeight: 500,
             }}
           >
-            🚀 Loading 3D Model...
+            Loading AR Experience...
           </Typography>
         </Box>
       )}
