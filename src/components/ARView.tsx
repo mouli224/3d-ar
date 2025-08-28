@@ -46,45 +46,53 @@ const ARView: React.FC = () => {
   // Camera setup
   const initCamera = async () => {
     try {
-      console.log('Requesting camera access...');
+      console.log('🎥 Starting camera initialization...');
+      console.log('📍 Location:', window.location.href);
+      console.log('🔒 Protocol:', window.location.protocol);
+      console.log('🌐 User Agent:', navigator.userAgent);
       
       // Check if we're in a secure context (required for camera access)
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera API not available. Please use HTTPS or localhost.');
+        console.error('❌ Camera API not available');
+        throw new Error('Camera API not available. Please use a modern browser with HTTPS.');
       }
 
-      // Check if we're in a secure context
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        throw new Error('Camera access requires HTTPS in production. Please ensure your site is served over HTTPS.');
+      // Check if we're in a secure context  
+      if (!window.isSecureContext) {
+        console.error('❌ Not in secure context');
+        throw new Error('Camera access requires HTTPS. Please ensure your site is served over HTTPS.');
       }
       
-      // Try different camera configurations
+      console.log('✅ Security checks passed, requesting camera access...');
+      
+      // Try different camera configurations (mobile-friendly)
       const constraints = [
-        // Primary: Back camera with high resolution
+        // Mobile-optimized: Environment camera
+        {
+          video: { 
+            facingMode: { exact: 'environment' },
+            width: { ideal: 1280, min: 640, max: 1920 },
+            height: { ideal: 720, min: 480, max: 1080 }
+          }
+        },
+        // Fallback: Any environment camera
         {
           video: { 
             facingMode: 'environment',
-            width: { ideal: 1280, max: 1920 },
-            height: { ideal: 720, max: 1080 }
-          }
-        },
-        // Fallback: Any camera
-        {
-          video: { 
-            facingMode: { ideal: 'environment' },
             width: { ideal: 640 },
             height: { ideal: 480 }
           }
         },
-        // Last resort: Basic video
+        // Last resort: Any camera
         { video: true }
       ];
 
       let stream = null;
       for (const constraint of constraints) {
         try {
+          console.log('🔄 Trying constraint:', constraint);
           stream = await navigator.mediaDevices.getUserMedia(constraint);
-          console.log('Camera stream obtained with constraint:', constraint);
+          console.log('✅ Camera stream obtained with constraint:', constraint);
           break;
         } catch (err) {
           console.warn('Failed with constraint:', constraint, err);
@@ -126,13 +134,17 @@ const ARView: React.FC = () => {
         
         // Play the video
         try {
+          console.log('🎬 Attempting to play video...');
           await videoRef.current.play();
-          console.log('Video is now playing');
+          console.log('✅ Video is now playing successfully');
         } catch (playError) {
-          console.error('Video play failed:', playError);
-          // Try to play again after a short delay
+          console.error('❌ Video play failed:', playError);
+          // Try to play again after a short delay (sometimes needed on mobile)
           setTimeout(() => {
-            videoRef.current?.play().catch(console.error);
+            console.log('🔄 Retrying video play...');
+            videoRef.current?.play().catch((retryError) => {
+              console.error('❌ Video retry failed:', retryError);
+            });
           }, 500);
         }
       }
@@ -431,7 +443,9 @@ const ARView: React.FC = () => {
   // Fetch available models
   const fetchModels = async () => {
     try {
+      console.log('📦 Fetching models...');
       const userModels = await modelService.getModels();
+      console.log('👤 User models loaded:', userModels.length);
       
       // Add sample models
       const sampleModels: Model3D[] = [
@@ -464,11 +478,16 @@ const ARView: React.FC = () => {
         },
       ];
       
+      console.log('🎯 Sample models created:', sampleModels.length);
       setModels([...sampleModels, ...userModels]);
+      console.log('📊 Total models available:', sampleModels.length + userModels.length);
       
       // Auto-select first model if none selected
       if (!selectedModel && sampleModels.length > 0) {
+        console.log('🎯 Auto-selecting first model:', sampleModels[0].name);
         setSelectedModel(sampleModels[0]);
+      } else {
+        console.log('📊 Current selected model:', selectedModel?.name || 'none');
       }
     } catch (err) {
       console.error('Failed to fetch models:', err);
@@ -571,14 +590,37 @@ const ARView: React.FC = () => {
 
   // Start AR
   const startAR = async () => {
-    await initCamera();
-    initThreeJS();
-    animate();
-    setIsARActive(true);
-    
-    // Load selected model
-    if (selectedModel) {
-      loadModel(selectedModel);
+    try {
+      console.log('🚀 Starting AR experience...');
+      setIsLoading(true);
+      setError(null);
+      
+      console.log('📸 Initializing camera...');
+      await initCamera();
+      
+      console.log('🎮 Initializing Three.js...');
+      initThreeJS();
+      
+      console.log('🎬 Starting animation loop...');
+      animate();
+      
+      console.log('✅ Setting AR active...');
+      setIsARActive(true);
+      
+      // Load selected model
+      if (selectedModel) {
+        console.log('📦 Loading selected model:', selectedModel.name);
+        loadModel(selectedModel);
+      } else {
+        console.log('📦 No model selected, will auto-load first available');
+      }
+      
+      console.log('🎉 AR initialization complete!');
+    } catch (error) {
+      console.error('❌ AR initialization failed:', error);
+      setError(error instanceof Error ? error.message : 'Failed to start AR experience');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -702,8 +744,12 @@ const ARView: React.FC = () => {
           variant="contained"
           size="large"
           startIcon={<ViewInArIcon sx={{ fontSize: 32 }} />}
-          onClick={startAR}
-          disabled={!selectedModel}
+          onClick={() => {
+            console.log('🔘 Start AR button clicked!');
+            console.log('📊 Current state - selectedModel:', selectedModel, 'models:', models.length);
+            startAR();
+          }}
+          disabled={isLoading}
           className="pulse-button"
           sx={{ 
             py: 3,
